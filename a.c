@@ -8,15 +8,17 @@
 int main() {
 
     int screen_witdh= 40;
-    int screen_height = 20;
+    int screen_height = 10;
 
     // initialize the screen 
     WINDOW *win = initscr();
     keypad(win, true);
     nodelay(win, true);
     //hide cursor
-   
     curs_set(0);
+    // game setting 
+    bool gameover = false; 
+
     // snake position
     int score_player1 = 0;
 
@@ -33,7 +35,7 @@ int main() {
     // body 
     int body_x[500];
     int body_y[500];
-    int snake_length = 1; // starts with head only
+    int snake_length = 20; // starts with head only
 
 
     while (1)
@@ -60,13 +62,14 @@ int main() {
         // change in posistion
         int next_x = snake_posx + snake_dirx;
         int next_y = snake_posy + snake_diry;
-        if (next_x == screen_witdh |
+        if (next_x == screen_witdh + 1 |
             next_x == 0 | 
             next_y == 0 |
-            next_y == screen_height)
-        {
-            continue;
+            next_y == screen_height + 1)
+        {               
+            gameover = true;
         }
+        
         else{
             
         snake_posx += snake_dirx;
@@ -107,7 +110,7 @@ int main() {
         }
 
 
-        // drawing the body 
+        // drawing the body and head of the snake 
         for (int i = 0; i < snake_length - 1; i++) {
             mvaddstr(body_y[i], body_x[i], "o"); // body
         }
@@ -117,8 +120,8 @@ int main() {
         mvaddstr(food_posy , food_posx, "&");
         if (food_posx == snake_posx && food_posy == snake_posy)
         {
-            food_posx = rand() % screen_witdh;
-            food_posy = rand() % screen_height;
+            food_posx = (rand()  % (screen_witdh-1)+ 1);
+            food_posy = (rand()  % (screen_height-1) + 1);
             score_player1 += 1;
             if (snake_length < 100) snake_length += 1; // prevent overflow
 
@@ -128,6 +131,9 @@ int main() {
         
 
         usleep(100000);
+
+        mvprintw(screen_height + 3, 0, "Score Player 1: %d", score_player1);
+        mvprintw(screen_height + 4, 0, "Press e to exit the game!");
 
 
     }
