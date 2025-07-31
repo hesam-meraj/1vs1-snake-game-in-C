@@ -35,7 +35,7 @@ int main() {
     // body 
     int body_x[500];
     int body_y[500];
-    int snake_length = 20; // starts with head only
+    int snake_length = 10; // starts with head only
 
 
     while (1)
@@ -62,21 +62,28 @@ int main() {
         // change in posistion
         int next_x = snake_posx + snake_dirx;
         int next_y = snake_posy + snake_diry;
+        for (int i = 0; i < snake_length; i++) {
+    if (body_x[i] == next_x && body_y[i] == next_y) {
+        gameover = true;
+        break;
+    }
+}
+
         if (next_x == screen_witdh + 1 |
             next_x == 0 | 
             next_y == 0 |
             next_y == screen_height + 1)
         {               
             gameover = true;
+            continue;
         }
-        
         else{
+            
+
             
         snake_posx += snake_dirx;
         snake_posy += snake_diry;
-        }
-        
-        
+        }        
         // update last (new head) position
 
         
