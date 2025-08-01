@@ -130,7 +130,7 @@ int main()
 
         while (!gameover)
         {
-            if (difftime(time(NULL), start_time) >= 2) {
+            if (difftime(time(NULL), start_time) >= 120) {
                 gameover = true;
             }
             int pressed = wgetch(win);
@@ -277,7 +277,7 @@ int main()
             body_x[snake_length - 1] = snake_posx;
             body_y[snake_length - 1] = snake_posy;
 
-            // first snake
+            // second snake
             // update last (new head) position
             // shift body
 
@@ -291,6 +291,34 @@ int main()
             }
             body2_x[snake2_length - 1] = snake2_posx;
             body2_y[snake2_length - 1] = snake2_posy;
+            
+            // head of Snake 1 hits body of Snake 2
+            for (int i = 0; i < snake2_length - 1; i++) {
+                if (snake_posx == body2_x[i] && snake_posy == body2_y[i]) {
+                    player1_dead = true;
+                    gameover =true;
+                }
+            }
+
+            // head of Snake 2 hits body of Snake 1
+            for (int i = 0; i < snake_length - 1; i++) {
+                if (snake2_posx == body_x[i] && snake2_posy == body_y[i]) {
+                    player2_dead = true;
+                    gameover = true;
+                }
+            }
+
+            // heads collision
+            if (snake_posx == snake2_posx && snake_posy == snake2_posy) {
+                if (snake_length > snake2_length) {
+                    player2_dead = true;
+                } else if (snake2_length > snake_length) {
+                    player1_dead = true;
+                } else {
+                    // Both lose
+                    gameover = true;
+                }
+            }
 
 
             erase();
