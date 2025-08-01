@@ -3,6 +3,7 @@
 #include <curses.h>
 #include <time.h>
 #include <string.h>
+#include <time.h>
 
 // gameboard function
 void gameboard(int screen_witdh, int screen_height)
@@ -21,33 +22,67 @@ void gameboard(int screen_witdh, int screen_height)
     }
 }
 
+void display_game_over_screen(
+    int screen_height,
+    int screen_witdh,
+    int score_player1,
+    int score_player2,
+    bool player1_dead,
+    bool player2_dead
+) {
+    mvprintw(screen_height + 5, 0, "Time's up!");
 
+    mvprintw(screen_height / 2, screen_witdh / 2 - 5, "GAME OVER!");
+    mvprintw(screen_height + 1, 0, "Press 'g' to restart or 'e' to exit.");
+    mvprintw(screen_height + 3, 0, "Score Player 1: %d", score_player1 * 10);
+    mvprintw(screen_height + 3, 20, "Score Player 2: %d", score_player2 * 10);
 
+    if (player1_dead && !player2_dead) {
+        mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 6, "Player 2 Wins!");
+    } else if (player2_dead && !player1_dead) {
+        mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 6, "Player 1 Wins!");
+    } else if (!player1_dead && !player2_dead) {
+        if (score_player1 > score_player2)
+            mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 6, "Player 1 Wins (Score)!");
+        else if (score_player2 > score_player1)
+            mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 6, "Player 2 Wins (Score)!");
+        else
+            mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 4, "It's a tie!");
+    }
+}
 
+void save_score_to_file(int score_player1, int score_player2, bool player1_dead, bool player2_dead) {
+    FILE *file = fopen("score.txt", "a");  
+    if (file == NULL) {
+        return;
+    }
 
-// handle_input function
-void handle_input(int pressed, int *dx, int *dy)
-{
-    if (pressed == KEY_LEFT && *dx != 1) {
-        *dx = -1; *dy = 0;
+    fprintf(file, "Player 1: %d | Player 2: %d | ", score_player1, score_player2);
+
+    if (player1_dead && !player2_dead)
+        fprintf(file, "Winner: Player 2\n");
+    else if (player2_dead && !player1_dead)
+        fprintf(file, "Winner: Player 1\n");
+    else if (!player1_dead && !player2_dead) {
+        if (score_player1 > score_player2)
+            fprintf(file, "Winner: Player 1 (Score)\n");
+        else if (score_player2 > score_player1)
+            fprintf(file, "Winner: Player 2 (Score)\n");
+        else
+            fprintf(file, "Result: Tie\n");
     }
-    else if (pressed == KEY_RIGHT && *dx != -1) {
-        *dx = 1; *dy = 0;
-    }
-    else if (pressed == KEY_UP && *dy != 1) {
-        *dx = 0; *dy = -1;
-    }
-    else if (pressed == KEY_DOWN && *dy != -1) {
-        *dx = 0; *dy = 1;
-    }
+
+    fclose(file);
 }
 
 
 int main()
 {
 
+
     while (1)
     {
+        time_t start_time = time(NULL);  // Record the start time
         int screen_witdh = 40;
         int screen_height = 20;
 
@@ -67,6 +102,11 @@ int main()
         // direction
         int snake_dirx = 1;
         int snake_diry = 0;
+        int body_x[500];
+        int body_y[500];
+        int snake_length = 10; // starts with head only
+        bool player1_dead = false;
+
 
 
         // snake__2 postion
@@ -76,31 +116,23 @@ int main()
         // direction
         int snake2_dirx = -1;
         int snake2_diry = 0;
-
-
-
-
+        int body2_x[500];
+        int body2_y[500];
+        int snake2_length = 10; // starts with head only
+        bool player2_dead = false;
 
 
         // food posiotion
         int food_posx = rand() % screen_witdh;
         int food_posy = rand() % screen_height;
 
-        // body 1
-        int body_x[500];
-        int body_y[500];
-        int snake_length = 10; // starts with head only
-        // body 2
-
-
-        int body2_x[500];
-        int body2_y[500];
-        int snake2_length = 10; // starts with head only
-
 
 
         while (!gameover)
         {
+            if (difftime(time(NULL), start_time) >= 2) {
+                gameover = true;
+            }
             int pressed = wgetch(win);
 
             // user input for snake 2
@@ -181,6 +213,7 @@ int main()
             {
                 if (body_x[i] == next_x && body_y[i] == next_y)
                 {
+                    player1_dead = true;
                     gameover = true;
                     break;
                 }
@@ -191,6 +224,7 @@ int main()
                 next_y == 0 ||
                 next_y == screen_height + 1)
             {
+                player1_dead = true;
                 gameover = true;
                 continue;
             }
@@ -206,6 +240,7 @@ int main()
             {
                 if (body2_x[i] == next2_x && body2_y[i] == next2_y)
                 {
+                    player2_dead = true;
                     gameover = true;
                     break;
                 }
@@ -216,6 +251,7 @@ int main()
                 next2_y == 0 ||
                 next2_y == screen_height + 1)
             {
+                player2_dead = true;
                 gameover = true;
                 continue;
             }
@@ -308,13 +344,19 @@ int main()
 
             usleep(100000);
 
-            mvprintw(screen_height + 3, 0, "Score Player 1: %d", score_player1);
+            mvprintw(screen_height + 3, 0, "Score Player 1: %d", score_player1 * 10);
+            mvprintw(screen_height + 3, 20, "Score Player 2: %d", score_player2 * 10);
+
             mvprintw(screen_height + 4, 0, "Press e to exit the game!");
         }
 
         erase();
-        mvprintw(screen_height / 2, screen_witdh / 2 - 5, "GAME OVER!");
-        mvprintw(screen_height / 2 + 1, screen_witdh / 2 - 12, "Press 'g' to restart or 'e' to exit.");
+        display_game_over_screen(screen_height, screen_witdh,
+                         score_player1, score_player2,
+                         player1_dead, player2_dead);
+        save_score_to_file(score_player1, score_player2, player1_dead, player2_dead);
+
+
         refresh();
         nodelay(win, false); // wait for keypress
 
